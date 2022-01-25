@@ -87,25 +87,37 @@ namespace TNMC
         }
 
         #endregion
-
+        #region Boilerplate screen stuffs
         private int vbo;
         private int vao;
-        public ShaderProgram sprog = new ShaderProgram() { id = 0 };
+        public static ShaderProgram sprog = new ShaderProgram() { id = 0 };
+        private int uiResolution = -1;
         private readonly float[] verteces =
         {
             -1.0f, -1.0f, 0.0f,
             -1.0f, 3.0f, 0.0f,
             3.0f, -1.0f, 0.0f
         };
-
+        #endregion
         #region Delegate Stuffs
         public static class Delegates
         {
-            public delegate void UpdateDelegate(double deltat);
-            public static UpdateDelegate? Update;
+            #region Delegate Declarations
+            public delegate void TimeSensitiveDelegate(double deltat);
+            public delegate void GetUniformDeligate(int sprogid);
+            public delegate void StaticDelegate();
+            public delegate void InputDelegate(KeyboardState keyboardstate);
+            #endregion
+            #region Delegates
+            public static TimeSensitiveDelegate? Updates;
+            public static StaticDelegate? Collisions;
+            public static StaticDelegate? SendUniforms;
+            public static GetUniformDeligate? BindUniforms;
+            public static InputDelegate? Movement;
+
+            #endregion
         }
         #endregion
-
         #region Time class
         public static class Time
         {
@@ -113,6 +125,10 @@ namespace TNMC
             public static double ellapsed;
             public static double deltatime;
         }
+        #endregion
+        #region Global stuffs
+        public static Vector3 Gravity = new Vector3(0.0f, 0.0f, 0.0f);
+        public Player player = new Player();
         #endregion
 
         public Game(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings) : base(gameWindowSettings, nativeWindowSettings)
@@ -136,6 +152,9 @@ namespace TNMC
 
             sprog = ShaderProgram.Load("Resources/Screen.vert", "Resources/Screen.frag");
             GL.UseProgram(sprog.id);
+
+            uiResolution = GL.GetUniformLocation(sprog.id, "iResolution");
+            if (Delegates.BindUniforms != null) Delegates.BindUniforms(sprog.id);
 
             Time.sw.Start();
         }
@@ -161,11 +180,11 @@ namespace TNMC
 
             Time.deltatime = Time.sw.ElapsedMilliseconds / 1000.0 - Time.ellapsed;
             Time.ellapsed += Time.deltatime;
-
-            if(Delegates.Update != null)
-            {
-                Delegates.Update(Time.deltatime);
-            }
+            #endregion
+            #region Delegate handling
+            if (Delegates.Movement != null)     Delegates.Movement(KeyboardState);
+            if (Delegates.Updates != null)      Delegates.Updates(Time.deltatime);
+            if (Delegates.Collisions != null)   Delegates.Collisions();
             #endregion
         }
 
@@ -177,13 +196,13 @@ namespace TNMC
             //GL.Clear(ClearBufferMask.ColorBufferBit);
             #endregion
             //=============================================================================//
-
             GL.UseProgram(sprog.id);
 
+            GL.Uniform2(uiResolution, Size);
+            if(Delegates.SendUniforms != null) Delegates.SendUniforms();
+
             GL.BindVertexArray(vao);
-
             GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
-
             //=============================================================================//
             SwapBuffers();
         }
