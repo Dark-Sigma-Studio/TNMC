@@ -71,6 +71,7 @@ namespace TNMC
             Game.Delegates.BindUniforms += BindUniforms;
             Game.Delegates.SendUniforms += SendUniforms;
             Game.Delegates.Movement += HandleMovement;
+            Game.Delegates.Look += HandleLook;
         }
         #region Uniform stuffs
         int ucampos = -1;
@@ -109,6 +110,14 @@ namespace TNMC
             if (kstate.IsKeyDown(Keys.S)) moveimpulse -= forward;
             if (kstate.IsKeyDown(Keys.D)) moveimpulse += right;
             if (kstate.IsKeyDown(Keys.A)) moveimpulse -= right;
+        }
+
+        public void HandleLook(MouseState mstate)
+        {
+            Vector2 delta = mstate.Delta;
+
+            yaw += delta.X / 1000.0;
+            pitch += delta.Y / 1000.0;
         }
     }
 }
