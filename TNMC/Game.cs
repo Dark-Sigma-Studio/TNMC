@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 
 namespace TNMC
@@ -97,6 +98,23 @@ namespace TNMC
             3.0f, -1.0f, 0.0f
         };
 
+        #region Delegate Stuffs
+        public static class Delegates
+        {
+            public delegate void UpdateDelegate(double deltat);
+            public static UpdateDelegate? Update;
+        }
+        #endregion
+
+        #region Time class
+        public static class Time
+        {
+            public static Stopwatch sw = new Stopwatch();
+            public static double ellapsed;
+            public static double deltatime;
+        }
+        #endregion
+
         public Game(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings) : base(gameWindowSettings, nativeWindowSettings)
         {
         }
@@ -118,6 +136,8 @@ namespace TNMC
 
             sprog = ShaderProgram.Load("Resources/Screen.vert", "Resources/Screen.frag");
             GL.UseProgram(sprog.id);
+
+            Time.sw.Start();
         }
 
         protected override void OnResize(ResizeEventArgs e)
@@ -137,6 +157,14 @@ namespace TNMC
             if (input.IsKeyDown(Keys.Escape))
             {
                 Close();
+            }
+
+            Time.deltatime = Time.sw.ElapsedMilliseconds / 1000.0 - Time.ellapsed;
+            Time.ellapsed += Time.deltatime;
+
+            if(Delegates.Update != null)
+            {
+                Delegates.Update(Time.deltatime);
             }
             #endregion
         }
