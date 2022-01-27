@@ -56,7 +56,7 @@ vec3 DDAtest(in vec3 ro, in vec3 rd)
 		int(totdists.y == mindist),
 		int(totdists.z == mindist));
 
-		hit = cell.z < cell.x;
+		hit = cell.z < cell.x / 3.0;
 		if(hit) continue;
 
 		totdists += tonext * vec3(

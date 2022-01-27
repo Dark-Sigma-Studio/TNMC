@@ -66,6 +66,8 @@ namespace TNMC
 
         public Player()
         {
+            MoveState = WalkState;
+
             Game.Delegates.Updates += DoPhysics;
             Game.Delegates.Collisions += DoCollisions;
             Game.Delegates.BindUniforms += BindUniforms;
@@ -93,7 +95,11 @@ namespace TNMC
         #endregion
         public void DoCollisions()
         {
-            pos.Z = Math.Max(0, pos.Z);
+            if(pos.Z < Math.Ceiling((pos.X - 1.0)/ 3.0))
+            {
+                vel.Z = 0.0f;
+                pos.Z = (float)Math.Ceiling((pos.X - 1.0)/ 3.0);
+            }
         }
 
         public void DoPhysics(double dt)
@@ -103,13 +109,29 @@ namespace TNMC
             vel += Game.Gravity * (float)dt * 0.5f - moveimpulse;
         }
 
-        public void HandleMovement(KeyboardState kstate)
+        delegate void MoveStateDelegate(KeyboardState kstate);
+        MoveStateDelegate MoveState;
+
+        public void FlyState(KeyboardState kstate)
+        {
+
+        }
+
+        public void WalkState(KeyboardState kstate)
         {
             moveimpulse = Vector3.Zero;
-            if (kstate.IsKeyDown(Keys.W)) moveimpulse += forward;
-            if (kstate.IsKeyDown(Keys.S)) moveimpulse -= forward;
-            if (kstate.IsKeyDown(Keys.D)) moveimpulse += right;
-            if (kstate.IsKeyDown(Keys.A)) moveimpulse -= right;
+
+            float speed = 5.0f;
+
+            if (kstate.IsKeyDown(Keys.W)) moveimpulse += (forward - new Vector3(0.0f, 0.0f, forward.Z)).Normalized() * speed;
+            if (kstate.IsKeyDown(Keys.S)) moveimpulse -= (forward - new Vector3(0.0f, 0.0f, forward.Z)).Normalized() * speed;
+            if (kstate.IsKeyDown(Keys.D)) moveimpulse += right * speed;
+            if (kstate.IsKeyDown(Keys.A)) moveimpulse -= right * speed;
+        }
+
+        public void HandleMovement(KeyboardState kstate)
+        {
+            MoveState(kstate);
         }
 
         public void HandleLook(MouseState mstate, bool iscursorgrabbed)
