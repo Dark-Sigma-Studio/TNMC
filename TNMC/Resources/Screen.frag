@@ -20,7 +20,7 @@ vec3 DDAtest(in vec3 ro, in vec3 rd)
 
 	vec3 tonext = 1.0 / abs(rd);
 
-	ivec3 cell = ivec3(ro);
+	ivec3 cell = ivec3(floor(ro));
 	ivec3 cellstep = ivec3(sign(rd));
 
 	//==============================================================================//
@@ -39,37 +39,40 @@ vec3 DDAtest(in vec3 ro, in vec3 rd)
 
 	vec3 p = ro + rd * mindist;
 
-	//if(dists.x == mindist) cell.x += cellstep.x;
-	//if(dists.y == mindist) cell.y += cellstep.y;
-	//if(dists.z == mindist) cell.z += cellstep.z;
-
 	//===============================================================================//
 
 	bool hit = false;
-	vec3 totdists = tonext + dists;
+	vec3 totdists = dists;
 	float dist = mindist;
-	for(int i = 0; i < 256 && !hit; i++)
+	for(int i = 0; i < 512 && !hit; i++)
 	{
-		//Check to see if we have hit a solid cell
-		hit = cell.z <= 0;
-		if(hit) continue;
 		
 		//Do the do with the doobilydo
 		float mindist = min(totdists.x, min(totdists.y, totdists.z));
 		dist = mindist;
 
-		if(totdists.x == mindist){ totdists.x += tonext.x; cell.x += cellstep.x; }
-		if(totdists.y == mindist){ totdists.y += tonext.y; cell.y += cellstep.y; }
-		if(totdists.z == mindist){ totdists.z += tonext.z; cell.z += cellstep.z; }
+		cell += cellstep * ivec3(
+		int(totdists.x == mindist), 
+		int(totdists.y == mindist),
+		int(totdists.z == mindist));
+
+		hit = cell.z < cell.x;
+		if(hit) continue;
+
+		totdists += tonext * vec3(
+		float(totdists.x == mindist),
+		float(totdists.y == mindist),
+		float(totdists.z == mindist));
 	}
 	
 
 	p = ro + rd * dist;
-	//p = float(hit) * p;
 
-	col = (fract(p) - 0.5) * 2.0;
+	vec3 tuv = p - cell;
 
-	return col;
+	col = tuv;
+
+	return col * float(hit);
 }
 
 vec3 Plane(in vec3 ro, in vec3 rd)

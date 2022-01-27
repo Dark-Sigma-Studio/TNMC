@@ -129,7 +129,7 @@ namespace TNMC
         }
         #endregion
         #region Global stuffs
-        public static Vector3 Gravity = new Vector3(0.0f, 0.0f, 0.0f);
+        public static Vector3 Gravity = new Vector3(0.0f, 0.0f, -10.0f);
         public Player player = new Player();
         #endregion
 

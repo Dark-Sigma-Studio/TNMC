@@ -120,6 +120,7 @@ namespace TNMC
             {
                 yaw += delta.X / 1000.0;
                 pitch += delta.Y / 1000.0;
+                pitch = Math.Clamp(pitch, -1.5, 1.5);
             }
         }
     }
