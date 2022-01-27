@@ -66,7 +66,9 @@ namespace TNMC
 
         public Player()
         {
-            MoveState = WalkState;
+            MoveState = FlyState;
+            CollisionState = NoCollision;
+            PhysicsState = FlyPhysics;
 
             Game.Delegates.Updates += DoPhysics;
             Game.Delegates.Collisions += DoCollisions;
@@ -93,7 +95,19 @@ namespace TNMC
             GL.UniformMatrix3(ucamdirs, false, ref tdirs);
         }
         #endregion
+        delegate void CollisionDelegate();
+        CollisionDelegate CollisionState;
         public void DoCollisions()
+        {
+            CollisionState();
+        }
+
+        public void NoCollision()
+        {
+
+        }
+
+        public void NormCollision()
         {
             if(pos.Z < Math.Ceiling((pos.X - 1.0)/ 3.0))
             {
@@ -102,11 +116,23 @@ namespace TNMC
             }
         }
 
+        delegate void PhysicsDelegate(double dt);
+        PhysicsDelegate PhysicsState;
         public void DoPhysics(double dt)
+        {
+            PhysicsState(dt);
+        }
+        public void NormalPhysics(double dt)
         {
             vel += Game.Gravity * (float)dt * 0.5f + impulse + moveimpulse;
             pos += vel * (float)dt;
             vel += Game.Gravity * (float)dt * 0.5f - moveimpulse;
+        }
+        public void FlyPhysics(double dt)
+        {
+            vel += impulse + moveimpulse;
+            pos += vel * (float)dt;
+            vel *= (float)Math.Pow(1.0 - 0.9, dt);
         }
 
         delegate void MoveStateDelegate(KeyboardState kstate);
@@ -114,13 +140,18 @@ namespace TNMC
 
         public void FlyState(KeyboardState kstate)
         {
+            moveimpulse = Vector3.Zero;
+            float speed = 3.0f;
 
+            if (kstate.IsKeyDown(Keys.W)) moveimpulse += forward * speed;
+            if (kstate.IsKeyDown(Keys.S)) moveimpulse -= forward * speed;
+            if (kstate.IsKeyDown(Keys.D)) moveimpulse += right * speed;
+            if (kstate.IsKeyDown(Keys.A)) moveimpulse -= right * speed;
         }
 
         public void WalkState(KeyboardState kstate)
         {
             moveimpulse = Vector3.Zero;
-
             float speed = 5.0f;
 
             if (kstate.IsKeyDown(Keys.W)) moveimpulse += (forward - new Vector3(0.0f, 0.0f, forward.Z)).Normalized() * speed;

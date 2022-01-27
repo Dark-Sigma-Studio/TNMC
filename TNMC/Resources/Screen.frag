@@ -3,6 +3,11 @@
 #define iCoord gl_FragCoord.xy
 //-------------------------------------//
 
+layout(std430, binding = 3) buffer chunk
+{
+	uint[16][16][16]data;
+};
+
 out vec4 fragcol;
 
 uniform vec2 iResolution;
@@ -13,6 +18,21 @@ uniform struct camdata
 	vec3 pos;
 	mat3 dirs;
 }cam;
+
+bool Check(in ivec3 cell)
+{
+	bool solid = false;
+
+	//solid = cell.z < 0;
+
+	if(cell.x  < 0 || cell.x >= 16 
+	|| cell.y  < 0 || cell.y >= 16 
+	|| cell.z  < 0 || cell.z >= 16) return false;
+
+	solid = data[cell.x][cell.y][cell.z] > 0;
+
+	return solid;
+}
 
 vec3 DDAtest(in vec3 ro, in vec3 rd)
 {
@@ -44,7 +64,7 @@ vec3 DDAtest(in vec3 ro, in vec3 rd)
 	bool hit = false;
 	vec3 totdists = dists;
 	float dist = mindist;
-	for(int i = 0; i < 512 && !hit; i++)
+	for(int i = 0; i < 256 && !hit; i++)
 	{
 		
 		//Do the do with the doobilydo
@@ -56,7 +76,8 @@ vec3 DDAtest(in vec3 ro, in vec3 rd)
 		int(totdists.y == mindist),
 		int(totdists.z == mindist));
 
-		hit = cell.z < cell.x / 3.0;
+		//Check the cell...
+		hit = Check(cell);
 		if(hit) continue;
 
 		totdists += tonext * vec3(

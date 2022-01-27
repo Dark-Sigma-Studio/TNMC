@@ -104,7 +104,7 @@ namespace TNMC
         {
             #region Delegate Declarations
             public delegate void TimeSensitiveDelegate(double deltat);
-            public delegate void GetUniformDeligate(int sprogid);
+            public delegate void ShaderProgramDelegate(int sprogid);
             public delegate void StaticDelegate();
             public delegate void KeyboardDelegate(KeyboardState keyboardstate);
             public delegate void MouseDelegate(MouseState mousestate, bool iscursorgrabbed);
@@ -113,7 +113,8 @@ namespace TNMC
             public static TimeSensitiveDelegate? Updates;
             public static StaticDelegate? Collisions;
             public static StaticDelegate? SendUniforms;
-            public static GetUniformDeligate? BindUniforms;
+            public static ShaderProgramDelegate? BindUniforms;
+            public static StaticDelegate? BindSSBO;
             public static KeyboardDelegate? Movement;
             public static MouseDelegate? Look;
 
@@ -131,15 +132,20 @@ namespace TNMC
         #region Global stuffs
         public static Vector3 Gravity = new Vector3(0.0f, 0.0f, -10.0f);
         public Player player = new Player();
+        public static Random random = new Random();
         #endregion
 
         public Game(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings) : base(gameWindowSettings, nativeWindowSettings)
         {
         }
 
+        public World.Chunk tchunk = new World.Chunk();
+
         protected override void OnLoad()
         {
             base.OnLoad();
+
+            tchunk.Generate();
 
             GL.ClearColor(0.125f, 0.175f, 0.257f, 1.0f);
 
@@ -154,6 +160,8 @@ namespace TNMC
 
             sprog = ShaderProgram.Load("Resources/Screen.vert", "Resources/Screen.frag");
             GL.UseProgram(sprog.id);
+
+            tchunk.Send();
 
             uiResolution = GL.GetUniformLocation(sprog.id, "iResolution");
             if (Delegates.BindUniforms != null) Delegates.BindUniforms(sprog.id);
