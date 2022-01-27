@@ -112,12 +112,15 @@ namespace TNMC
             if (kstate.IsKeyDown(Keys.A)) moveimpulse -= right;
         }
 
-        public void HandleLook(MouseState mstate)
+        public void HandleLook(MouseState mstate, bool iscursorgrabbed)
         {
             Vector2 delta = mstate.Delta;
 
-            yaw += delta.X / 1000.0;
-            pitch += delta.Y / 1000.0;
+            if(iscursorgrabbed)
+            {
+                yaw += delta.X / 1000.0;
+                pitch += delta.Y / 1000.0;
+            }
         }
     }
 }

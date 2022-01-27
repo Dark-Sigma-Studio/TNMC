@@ -107,7 +107,7 @@ namespace TNMC
             public delegate void GetUniformDeligate(int sprogid);
             public delegate void StaticDelegate();
             public delegate void KeyboardDelegate(KeyboardState keyboardstate);
-            public delegate void MouseDelegate(MouseState mousestate);
+            public delegate void MouseDelegate(MouseState mousestate, bool iscursorgrabbed);
             #endregion
             #region Delegates
             public static TimeSensitiveDelegate? Updates;
@@ -141,8 +141,6 @@ namespace TNMC
         {
             base.OnLoad();
 
-            CursorGrabbed = true;
-
             GL.ClearColor(0.125f, 0.175f, 0.257f, 1.0f);
 
             vbo = GL.GenBuffer();
@@ -170,6 +168,8 @@ namespace TNMC
             GL.Viewport(0, 0, e.Width, e.Height);
         }
 
+        //bool Cursor = true;
+
         protected override void OnUpdateFrame(FrameEventArgs args)
         {
             #region Boilerplate
@@ -180,6 +180,11 @@ namespace TNMC
             if (input.IsKeyPressed(Keys.Escape))
             {
                 CursorGrabbed = !CursorGrabbed;
+                if (!CursorGrabbed)
+                {
+                    CursorVisible = true;
+                    MousePosition = Size / 2;
+                }
             }
 
             Time.deltatime = Time.sw.ElapsedMilliseconds / 1000.0 - Time.ellapsed;
@@ -187,7 +192,7 @@ namespace TNMC
             #endregion
             #region Delegate handling
             if (Delegates.Movement != null)     Delegates.Movement(KeyboardState);
-            if (Delegates.Look != null)         Delegates.Look(MouseState);
+            if (Delegates.Look != null)         Delegates.Look(MouseState, CursorGrabbed);
             if (Delegates.Updates != null)      Delegates.Updates(Time.deltatime);
             if (Delegates.Collisions != null)   Delegates.Collisions();
             #endregion
