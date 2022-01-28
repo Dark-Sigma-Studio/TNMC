@@ -67,7 +67,7 @@ namespace TNMC
         public Player()
         {
             MoveState = FlyState;
-            CollisionState = NoCollision;
+            CollisionState = FlyCollision;
             PhysicsState = FlyPhysics;
 
             Game.Delegates.Updates += DoPhysics;
@@ -107,6 +107,51 @@ namespace TNMC
 
         }
 
+        public void FlyCollision()
+        {
+            if (float.IsNaN(pos.X) || float.IsNaN(pos.Y) || float.IsNaN(pos.Z)) return;
+
+            double r = 0.5;
+            Vector3 cpos = pos + new Vector3(0.0f, 0.0f, eyelevel);
+
+            bool hit = false;
+            Vector3 delta = Vector3.Zero;
+
+            Vector3i cell = (Vector3i)cpos;
+            Vector3i check = cell;
+            for(int z = -1; z <= 1; z++)
+            {
+                check.Z = cell.Z + z;
+                if (check.Z < 0 || check.Z >= 16) continue;
+                for(int y = -1; y <= 1; y++)
+                {
+                    check.Y = cell.Y + y;
+                    if (check.Y < 0 || check.Y >= 16) continue;
+                    for(int x = -1; x <= 1; x++)
+                    {
+                        check.X = cell.X + x;
+                        if (check.X < 0 || check.X >= 16) continue;
+
+                        if (Game.tchunk.Data[check.X, check.Y, check.Z] == 0) continue;
+
+                        Vector3 nearest = Vector3.Zero;
+                        nearest.X = Math.Clamp(cpos.X, check.X, check.X + 1);
+                        nearest.Y = Math.Clamp(cpos.Y, check.Y, check.Y + 1);
+                        nearest.Z = Math.Clamp(cpos.Z, check.Z, check.Z + 1);
+
+                        Vector3 tonearest = cpos - nearest;
+                        if (tonearest.Length >= r || tonearest.Length == 0) continue;
+
+                        Vector3 norm = tonearest.Normalized();
+                        Vector3 tpos = norm * (float)r + nearest;
+
+                        pos = tpos - new Vector3(0.0f, 0.0f, eyelevel);
+                        vel = vel - ((vel * norm) * norm);
+                    }
+                }
+            }
+        }
+
         public void NormCollision()
         {
             if(pos.Z < Math.Ceiling((pos.X - 1.0)/ 3.0))
@@ -130,9 +175,8 @@ namespace TNMC
         }
         public void FlyPhysics(double dt)
         {
-            vel += impulse + moveimpulse;
+            vel = impulse + moveimpulse;
             pos += vel * (float)dt;
-            vel *= (float)Math.Pow(1.0 - 0.9, dt);
         }
 
         delegate void MoveStateDelegate(KeyboardState kstate);
@@ -141,7 +185,7 @@ namespace TNMC
         public void FlyState(KeyboardState kstate)
         {
             moveimpulse = Vector3.Zero;
-            float speed = 3.0f;
+            float speed = 5.0f;
 
             if (kstate.IsKeyDown(Keys.W)) moveimpulse += forward * speed;
             if (kstate.IsKeyDown(Keys.S)) moveimpulse -= forward * speed;

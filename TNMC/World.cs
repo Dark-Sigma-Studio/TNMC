@@ -22,7 +22,7 @@ namespace TNMC
                     {
                         for(int x = 0; x < 16; x++)
                         {
-                            Data[x,y,z] = 1;
+                            Data[x,y,z] = (uint)(Game.rand.NextDouble() <= 0.25 ? 1 : 0);
                         }
                     }
                 }

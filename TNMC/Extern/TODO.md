@@ -1,4 +1,4 @@
-﻿# TNMC
+﻿# Storthem
 	- Totally not minecraft
 # TODO
   - [ ] Design
@@ -8,7 +8,13 @@
   - [ ] Development
     - [ ] Player
 	  - [ ] Movement
+	    - [x] Basic
+		- [ ] Advanced
+		- [ ] Final
 	  - [ ] Collision
+	    - [x] Basic
+		- [ ] Advanced
+		- [ ] Final
 	  - [ ] Inventory
 	- [ ] World
 	  - [ ] Overworld
@@ -23,6 +29,9 @@
   - [ ] Engineering
 	- [ ] Rendering
 	  - [ ] Environment
+	    - [x] Basic
+		- [ ] Advanced
+		- [ ] Final
 	  - [ ] UI
 	- [ ] Generation
 	  - [ ] World

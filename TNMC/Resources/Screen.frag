@@ -13,6 +13,8 @@ out vec4 fragcol;
 uniform vec2 iResolution;
 const float Pi = atan(0.0, -1.0);
 
+const int renderdist = 12;
+
 uniform struct camdata
 {
 	vec3 pos;
@@ -64,7 +66,7 @@ vec3 DDAtest(in vec3 ro, in vec3 rd)
 	bool hit = false;
 	vec3 totdists = dists;
 	float dist = mindist;
-	for(int i = 0; i < 256 && !hit; i++)
+	for(int i = 0; i < 16 * renderdist && !hit; i++)
 	{
 		
 		//Do the do with the doobilydo

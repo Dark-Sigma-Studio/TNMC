@@ -132,14 +132,14 @@ namespace TNMC
         #region Global stuffs
         public static Vector3 Gravity = new Vector3(0.0f, 0.0f, -10.0f);
         public Player player = new Player();
-        public static Random random = new Random();
+        public static Random rand = new Random();
         #endregion
 
         public Game(GameWindowSettings gameWindowSettings, NativeWindowSettings nativeWindowSettings) : base(gameWindowSettings, nativeWindowSettings)
         {
         }
 
-        public World.Chunk tchunk = new World.Chunk();
+        public static World.Chunk tchunk = new World.Chunk();
 
         protected override void OnLoad()
         {
