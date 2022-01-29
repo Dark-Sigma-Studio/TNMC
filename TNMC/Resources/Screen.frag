@@ -36,10 +36,9 @@ bool Check(in ivec3 cell)
 	return solid;
 }
 
-vec3 DDAtest(in vec3 ro, in vec3 rd)
-{
-	vec3 col = vec3(0.0);
 
+void DDAtest(in vec3 ro, in vec3 rd, out vec3 col)
+{
 	vec3 tonext = 1.0 / abs(rd);
 
 	ivec3 cell = ivec3(floor(ro));
@@ -91,22 +90,29 @@ vec3 DDAtest(in vec3 ro, in vec3 rd)
 
 	p = ro + rd * dist;
 
-	vec3 tuv = p - cell;
+	vec3 tuv = clamp(p - cell, 0.0, 1.0);
 
-	col = tuv;
-
-	return col * float(hit);
+	if(hit) col = tuv;
 }
 
-vec3 Plane(in vec3 ro, in vec3 rd)
+void Plane(in vec3 ro, in vec3 rd, out vec3 col)
 {
-	vec3 col = vec3(0.0);
-
 	vec2 uv = fract((ro.z / -rd.z) * rd.xy + ro.xy);
 
-	col = vec3(uv.x, uv.y, 0.0);
+	if(rd.z < 0.0) col = vec3(uv, 0.0);
+}
 
-	return col;
+vec3 Sky(in vec3 rd)
+{
+	vec3 col = vec3(0.1, 0.5, 0.7);
+
+	vec3 dir = normalize(rd);
+
+	col.x = pow(col.x, dir.z * 5.0);
+	col.y = pow(col.y, dir.z * 5.0);
+	col.z = pow(col.z, dir.z * 5.0);
+
+	return clamp(col, 0.0, 1.0);
 }
 
 void main()
@@ -114,6 +120,8 @@ void main()
 	vec2 uv = 2.0 * (iCoord - iResolution / 2.0) / iResolution.x;
 	vec3 rd = vec3(uv, 1.0).xzy * cam.dirs;
 	
+	vec3 col = Sky(rd);
+	DDAtest(cam.pos, rd, col);
 
-	fragcol = vec4(DDAtest(cam.pos, rd), 1.0);
+	fragcol = vec4(col, 1.0);
 }
