@@ -15,7 +15,7 @@ const float Pi = atan(0.0, -1.0);
 
 const vec3 sun = normalize(vec3(1.0, 0.5, -0.7));
 
-const int renderdist = 12;
+const int renderdist = 8;
 
 uniform struct camdata
 {
@@ -49,6 +49,15 @@ const vec3[10] gens =
 	vec3(0.0, 0.3, 0.1),
 	vec3(0.5, 0.8, 0.3)
 };
+
+vec3 GetFaceNormal(in vec3 UVT)
+{
+	vec3 uvt = UVT - 0.5;
+	vec3 fnorm = uvt;
+	float ext = max(abs(fnorm.x), max(abs(fnorm.y), abs(fnorm.z)));
+	fnorm *= vec3(abs(fnorm.x) == ext, abs(fnorm.y) == ext, abs(fnorm.z) == ext);
+	return normalize(fnorm);
+}
 
 vec3 NormTest(in vec3 UVT)
 {
@@ -97,69 +106,68 @@ vec3 CobbleTex(in vec3 uvt)
 	dist += 0.4;
 	dist = pow(dist, 8);
 
-	texcol = vec3(1.0 - dist);
+	texcol = clamp(vec3(1.0 - dist), 0.0, 1.0);
 	//============================================================================//
 	return texcol;
 }
 
-void DDAtest(in vec3 ro, in vec3 rd, out vec3 col)
+struct HitStruct
 {
-	vec3 tonext = 1.0 / abs(rd);
+	bool hit;
+	vec3 pos;
+	ivec3 cell;
+};
 
-	ivec3 cell = ivec3(floor(ro));
+void DDAV2 (in vec3 ro, in vec3 rd, inout float disttally, out HitStruct info)
+{
+	vec3 tonext = 1.0 /  abs(rd);
+
 	ivec3 cellstep = ivec3(sign(rd));
-
 	//==============================================================================//
-
-	vec3 dists = vec3(1.0);
-
-	dists = fract(ro);
+	// <--------- Set-up for first point of intersection --------->
+	vec3 dists = fract(ro);
 
 	if(rd.x > 0) dists.x = 1.0 - dists.x;
 	if(rd.y > 0) dists.y = 1.0 - dists.y;
 	if(rd.z > 0) dists.z = 1.0 - dists.z;
 
-	dists = dists / abs(rd);
+	dists /= abs(rd);
 
 	float mindist = min(dists.x, min(dists.y, dists.z));
 
-	vec3 p = ro + rd * mindist;
-
-	//===============================================================================//
-
+	info.pos = ro + rd * mindist;
+	//==============================================================================//
+	// <--------- DDA core algorithm --------->
 	bool hit = false;
 	vec3 totdists = dists;
 	float dist = mindist;
-	for(int i = 0; i < 16 * renderdist && !hit; i++)
+	while(!hit && disttally + dist < 16 * renderdist)
 	{
-		
-		//Do the do with the doobilydo
+		// [DDA stuffs]
 		float mindist = min(totdists.x, min(totdists.y, totdists.z));
 		dist = mindist;
 
-		cell += cellstep * ivec3(
+		info.cell += cellstep * ivec3(
 		int(totdists.x == mindist), 
 		int(totdists.y == mindist),
 		int(totdists.z == mindist));
 
-		//Check the cell...
-		hit = Check(cell);
+		// [Check Cell]
+		hit = Check(info.cell);
 		if(hit) continue;
 
+		// [Step forward allong ray]
 		totdists += tonext * vec3(
 		float(totdists.x == mindist),
 		float(totdists.y == mindist),
 		float(totdists.z == mindist));
 	}
-	
-
-	p = ro + rd * dist;
-
-	vec3 uvt = clamp(p - cell, 0.0, 1.0);
-
-	vec3 texcol = NormTest(uvt);
-
-	if(hit) col = texcol;
+	//==============================================================================//
+	// <--------- Clean-up information --------->
+	info.pos = ro + rd * dist;
+	disttally += dist;
+	info.hit = hit;
+	//==============================================================================//
 }
 
 void Plane(in vec3 ro, in vec3 rd, out vec3 col)
@@ -191,13 +199,48 @@ vec3 Sky(in vec3 rd)
 	return clamp(col, 0.0, 1.0);
 }
 
+void GetAlbedo(in vec3 uvt, in bool hit, out vec3 col)
+{
+	if(hit) col = CobbleTex(uvt);
+}
+
+void GetSunLight(inout HitStruct info, inout vec3 light, inout float tdist, in vec3 normal)
+{
+	if(!info.hit) return;
+
+	vec3 ro = info.pos;
+	vec3 rd = -sun;
+
+	DDAV2(ro, rd, tdist, info);
+
+	light = vec3(float(!info.hit) * clamp(dot(normal, -sun), 0.0, 1.0));
+}
+
 void main()
 {
 	vec2 uv = 2.0 * (iCoord - iResolution / 2.0) / iResolution.x;
 	vec3 rd = vec3(uv, 1.0).xzy * cam.dirs;
-	
-	vec3 col = Sky(rd);
-	DDAtest(cam.pos, rd, col);
+	//===========================================================================//
+	vec3 col = vec3(0.0);
+	HitStruct hitinfo = HitStruct
+	(
+		false,
+		cam.pos,
+		ivec3(floor(cam.pos))
+	);
+	float tdist = 0.0;
+	vec3 albedo = vec3(1.0);
+	vec3 light = Sky(rd);
+	//===========================================================================//
+	DDAV2(hitinfo.pos, rd, tdist, hitinfo);
+	vec3 uvt = clamp(hitinfo.pos - hitinfo.cell, 0.0, 1.0);
 
+	GetAlbedo(uvt, hitinfo.hit, albedo);
+	hitinfo.cell = ivec3(floor(hitinfo.pos));
+
+	GetSunLight(hitinfo, light, tdist, GetFaceNormal(uvt));
+
+	col = albedo * light;
+	//===========================================================================//
 	fragcol = vec4(col, 1.0);
 }

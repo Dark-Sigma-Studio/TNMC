@@ -38,3 +38,8 @@
 # Tasklist
 
 # Notes
+  - [ ] Render Pipeline
+    - [ ] col = albedo * (sum of all light)
+
+# To Future me:
+  - [ ] How bright should the sky be?
