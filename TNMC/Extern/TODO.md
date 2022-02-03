@@ -41,5 +41,7 @@
   - [ ] Render Pipeline
     - [ ] col = albedo * (sum of all light)
 
-# To Future me:
+# Problems for Future me:
   - [ ] How bright should the sky be?
+  - [ ] Soft shadows (something like get distance to edge of voxel)
+  - [ ] Angular illumination.

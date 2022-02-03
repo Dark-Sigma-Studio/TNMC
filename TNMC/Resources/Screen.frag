@@ -59,37 +59,6 @@ vec3 GetFaceNormal(in vec3 UVT)
 	return normalize(fnorm);
 }
 
-vec3 NormTest(in vec3 UVT)
-{
-	vec3 uvt = UVT - 0.5;
-	vec3 texcol = vec3(0.0);
-
-	vec3 fnorm = (uvt);
-	float ext = max(abs(fnorm.x), max(abs(fnorm.y), abs(fnorm.z)));
-	fnorm *= vec3(abs(fnorm.x) == ext, abs(fnorm.y) == ext, abs(fnorm.z) == ext);
-
-	fnorm = normalize(fnorm);
-	//=======================================================================//
-	//                                  <=>                                  //
-
-		vec3 norm = vec3(1.0);
-		vec2 uv = uvt.xy;
-		norm.x = float(abs(uv.x) >= abs(uv.y)) * sign(uv.x);
-		norm.y = float(abs(uv.y) >= abs(uv.x)) * sign(uv.y);
-		norm = normalize(norm);
-
-	//                                  <=>                                  //
-	//=======================================================================//
-	texcol = clamp(vec3(dot(norm, -sun)), 0.0, 1.0);
-
-	float ambient = 0.5;
-	float ambival = ambient + (1.0 - ambient) * (fnorm.z + 1.0) / 2.0;
-	texcol += ambival;
-	texcol /= 2.0;
-
-	return texcol;
-}
-
 vec3 CobbleTex(in vec3 uvt)
 {
 	vec3 texcol = vec3(0.0);
@@ -121,7 +90,6 @@ struct HitStruct
 void DDAV2 (in vec3 ro, in vec3 rd, inout float disttally, out HitStruct info)
 {
 	vec3 tonext = 1.0 /  abs(rd);
-
 	ivec3 cellstep = ivec3(sign(rd));
 	//==============================================================================//
 	// <--------- Set-up for first point of intersection --------->
@@ -180,7 +148,7 @@ void Plane(in vec3 ro, in vec3 rd, out vec3 col)
 vec3 Sun(in vec3 rd)
 {
 	vec3 proj = rd - (dot(rd, sun) * sun);
-	float size = 0.1;
+	float size = 0.2;
 	return vec3(size / (size + length(proj)));
 }
 
@@ -190,9 +158,11 @@ vec3 Sky(in vec3 rd)
 
 	vec3 dir = normalize(rd);
 
-	col.x = pow(col.x, dir.z * 5.0);
-	col.y = pow(col.y, dir.z * 5.0);
-	col.z = pow(col.z, dir.z * 5.0);
+	float density = 0.2;
+
+	col.x = pow(col.x, dir.z / density);
+	col.y = pow(col.y, dir.z / density);
+	col.z = pow(col.z, dir.z / density);
 
 	col += Sun(rd);
 
@@ -216,10 +186,28 @@ void GetSunLight(inout HitStruct info, inout vec3 light, inout float tdist, in v
 	light = vec3(float(!info.hit) * clamp(dot(normal, -sun), 0.0, 1.0));
 }
 
+void GetGlobalIllumination(inout HitStruct info, inout vec3 light)
+{
+	if(!info.hit) return;
+	
+	float levels = 1.0 / (1.0 + exp(8.0 - info.pos.z));
+	light += levels;
+}
+
+void GetAngularIllumination(inout HitStruct info, inout vec3 light, in vec3 normal)
+{
+	if(!info.hit) return;
+	// The higher up the position is, the more light comes from below
+	// the lower down the position is, the more light comes from above
+
+	
+}
+
 void main()
 {
 	vec2 uv = 2.0 * (iCoord - iResolution / 2.0) / iResolution.x;
 	vec3 rd = vec3(uv, 1.0).xzy * cam.dirs;
+	float exposure = exp(1.0);
 	//===========================================================================//
 	vec3 col = vec3(0.0);
 	HitStruct hitinfo = HitStruct
@@ -238,9 +226,15 @@ void main()
 	GetAlbedo(uvt, hitinfo.hit, albedo);
 	hitinfo.cell = ivec3(floor(hitinfo.pos));
 
+	HitStruct oldhit = hitinfo;
+
 	GetSunLight(hitinfo, light, tdist, GetFaceNormal(uvt));
+	GetGlobalIllumination(oldhit, light);
+	GetAngularIllumination(oldhit, light, GetFaceNormal(uvt));
 
 	col = albedo * light;
+
+	col = 1.0 - exp(-col * exposure);
 	//===========================================================================//
 	fragcol = vec4(col, 1.0);
 }
