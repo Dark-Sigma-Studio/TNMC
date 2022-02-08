@@ -75,7 +75,9 @@ vec3 CobbleTex(in vec3 uvt)
 	dist += 0.4;
 	dist = pow(dist, 8);
 
-	texcol = clamp(vec3(1.0 - dist), 0.0, 1.0);
+	float t = clamp(1.0 - dist, 0.0, 1.0);
+
+	texcol = mix(vec3(0.05, 0.05, 0.075), vec3(0.647, 0.635, 0.764), t);
 	//============================================================================//
 	return texcol;
 }
@@ -190,7 +192,7 @@ void GetGlobalIllumination(inout HitStruct info, inout vec3 light)
 {
 	if(!info.hit) return;
 	
-	float levels = 1.0 / (1.0 + exp(8.0 - info.pos.z));
+	float levels = 1.0 / (1.0 + exp((8.0 - info.pos.z) / 2.0));
 	light += levels;
 }
 
@@ -201,6 +203,18 @@ void GetAngularIllumination(inout HitStruct info, inout vec3 light, in vec3 norm
 	// the lower down the position is, the more light comes from above
 
 	
+}
+
+void UI(in vec2 UV, out vec3 col)
+{
+	vec2 uv = UV;
+	uv /= 0.05;
+	float t = length(uv);
+	t -= 0.20;
+	t = abs(t);
+	t /= 0.1;
+
+	col = mix(col, vec3(1.0), clamp(1.0 - t, 0.0, 1.0));
 }
 
 void main()
@@ -235,6 +249,8 @@ void main()
 	col = albedo * light;
 
 	col = 1.0 - exp(-col * exposure);
+
+	UI(uv, col);
 	//===========================================================================//
 	fragcol = vec4(col, 1.0);
 }
