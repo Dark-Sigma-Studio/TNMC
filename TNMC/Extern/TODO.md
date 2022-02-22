@@ -45,3 +45,5 @@
   - [ ] How bright should the sky be?
   - [ ] Soft shadows (something like get distance to edge of voxel)
   - [ ] Angular illumination.
+  - [ ] being able to send enough data to the graphics card.
+  - [ ] Asynchronous chunk generation and data pushing

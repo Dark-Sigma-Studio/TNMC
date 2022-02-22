@@ -5,8 +5,12 @@
 
 layout(std430, binding = 3) buffer chunk
 {
-	uint[16][16][16]data;
+	uint[128][128][128]data;
 };
+
+uniform ivec3 selectedcell;
+uniform bool hasselection;
+vec3 selectlight = vec3(0.0);
 
 out vec4 fragcol;
 
@@ -27,9 +31,9 @@ bool Check(in ivec3 cell)
 {
 	bool solid = false;
 
-	if(cell.x  < 0 || cell.x >= 16 
-	|| cell.y  < 0 || cell.y >= 16 
-	|| cell.z  < 0 || cell.z >= 16) return false;
+	if(cell.x  < 0 || cell.x >= 128 
+	|| cell.y  < 0 || cell.y >= 128 
+	|| cell.z  < 0 || cell.z >= 128) return false;
 
 	solid = data[cell.x][cell.y][cell.z] > 0;
 
@@ -124,6 +128,7 @@ void DDAV2 (in vec3 ro, in vec3 rd, inout float disttally, out HitStruct info)
 
 		// [Check Cell]
 		hit = Check(info.cell);
+		selectlight = vec3(float(info.cell == selectedcell));
 		if(hit) continue;
 
 		// [Step forward allong ray]
@@ -242,9 +247,11 @@ void main()
 
 	HitStruct oldhit = hitinfo;
 
+	vec3 tlight = selectlight * float(hasselection);
 	GetSunLight(hitinfo, light, tdist, GetFaceNormal(uvt));
 	GetGlobalIllumination(oldhit, light);
 	GetAngularIllumination(oldhit, light, GetFaceNormal(uvt));
+	light += tlight;
 
 	col = albedo * light;
 

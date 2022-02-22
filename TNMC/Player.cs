@@ -18,6 +18,10 @@ namespace TNMC
         public Vector3 moveimpulse = Vector3.Zero;
         public float eyelevel = 1.5f;
 
+        public Vector3i selectedcell = new Vector3i();
+        public Vector3i buildcell = new Vector3i();
+        public bool hasselection = false;
+
         public double pitch = 0.0;
         public double yaw = 0.0;
 
@@ -76,14 +80,19 @@ namespace TNMC
             Game.Delegates.SendUniforms += SendUniforms;
             Game.Delegates.Movement += HandleMovement;
             Game.Delegates.Look += HandleLook;
+            Game.Delegates.Look += ConDestruct;
         }
         #region Uniform stuffs
         int ucampos = -1;
         int ucamdirs = -1;
+        int uhasselection = -1;
+        int uselectedcell = -1;
         public void BindUniforms(int id)
         {
             ucampos = GL.GetUniformLocation(id, "cam.pos");
             ucamdirs = GL.GetUniformLocation(id, "cam.dirs");
+            uselectedcell = GL.GetUniformLocation(id, "selectedcell");
+            uhasselection = GL.GetUniformLocation(id, "hasselection");
         }
         public void SendUniforms()
         {
@@ -93,6 +102,9 @@ namespace TNMC
             Matrix3 tdirs = dirs;
 
             GL.UniformMatrix3(ucamdirs, false, ref tdirs);
+
+            GL.Uniform1(uhasselection, hasselection ? 1 : 0);
+            GL.Uniform3(uselectedcell, selectedcell.X, selectedcell.Y, selectedcell.Z);
         }
         #endregion
         delegate void CollisionDelegate();
@@ -122,15 +134,15 @@ namespace TNMC
             for(int z = -1; z <= 1; z++)
             {
                 check.Z = cell.Z + z;
-                if (check.Z < 0 || check.Z >= 16) continue;
+                if (check.Z < 0 || check.Z >= 128) continue;
                 for(int y = -1; y <= 1; y++)
                 {
                     check.Y = cell.Y + y;
-                    if (check.Y < 0 || check.Y >= 16) continue;
+                    if (check.Y < 0 || check.Y >= 128) continue;
                     for(int x = -1; x <= 1; x++)
                     {
                         check.X = cell.X + x;
-                        if (check.X < 0 || check.X >= 16) continue;
+                        if (check.X < 0 || check.X >= 128) continue;
 
                         if (Game.tchunk.Data[check.X, check.Y, check.Z] == 0) continue;
 
@@ -218,7 +230,104 @@ namespace TNMC
                 yaw += delta.X / 1000.0;
                 pitch += delta.Y / 1000.0;
                 pitch = Math.Clamp(pitch, -1.5, 1.5);
+
+                if(mstate.IsButtonDown(MouseButton.Left) && !mstate.WasButtonDown(MouseButton.Left))
+                {
+                    Game.tchunk.Data[selectedcell.X, selectedcell.Y, selectedcell.Z] = 0;
+                    Game.tchunk.Send();
+                }
+                if(mstate.IsButtonDown(MouseButton.Right) && !mstate.WasButtonDown(MouseButton.Right))
+                {
+                    Game.tchunk.Data[buildcell.X, buildcell.Y, buildcell.Z] = 1;
+                    Game.tchunk.Send();
+                }
             }
+        }
+
+        public void ConDestruct(MouseState mstate, bool iscursorgrabbed)
+        {
+            //Need to do a DDA test to cast a ray into the scene for voxel ray-cast testing...
+            // [Set-up for things we need] //
+            Vector3 tonext = Vector3.Zero;
+            tonext.X = 1f / Math.Abs(forward.X);
+            tonext.Y = 1f / Math.Abs(forward.Y);
+            tonext.Z = 1f / Math.Abs(forward.Z);
+
+            Vector3i cellstep = new Vector3i();
+            cellstep.X = Math.Sign(forward.X);
+            cellstep.Y = Math.Sign(forward.Y);
+            cellstep.Z = Math.Sign(forward.Z);
+            //===========================================================================//
+            // <----- Set-up for first point of intersection -----> //
+            Vector3 ro = pos + new Vector3(0f, 0f, eyelevel);
+
+            Vector3i cell = new Vector3i();
+            cell.X = (int)Math.Floor(ro.X);
+            cell.Y = (int)Math.Floor(ro.Y);
+            cell.Z = (int)Math.Floor(ro.Z);
+
+            if (cell.X < 0 || cell.X >= 128 ||
+                cell.Y < 0 || cell.Y >= 128 ||
+                cell.Z < 0 || cell.Z >= 128) return;
+
+            Vector3i prev = cell;
+
+            Vector3 dists = Vector3.Zero;
+            dists.X = ro.X % 1f;
+            dists.Y = ro.Y % 1f;
+            dists.Z = ro.Z % 1f;
+
+            if (forward.X > 0f) dists.X = 1.0f - dists.X;
+            if (forward.Y > 0f) dists.Y = 1.0f - dists.Y;
+            if (forward.Z > 0f) dists.Z = 1.0f - dists.Z;
+
+            dists.X /= Math.Abs(forward.X);
+            dists.Y /= Math.Abs(forward.Y);
+            dists.Z /= Math.Abs(forward.Z);
+
+            float mindist = Math.Min(dists.X, Math.Min(dists.Y, dists.Z));
+
+            Vector3 point = ro + forward * mindist;
+            //===========================================================================//
+            // <----- DDA core alforithm -----> //
+            bool hit = false;
+            Vector3 totdists = dists;
+            float dist = mindist;
+            while(!hit && dist < 6f)
+            {
+                // [DDA stuffs] //
+                mindist = Math.Min(totdists.X, Math.Min(totdists.Y, totdists.Z));
+                dist = mindist;
+
+                prev = cell;
+                cell += cellstep * new Vector3i(
+                    totdists.X == mindist ? 1 : 0,
+                    totdists.Y == mindist ? 1 : 0,
+                    totdists.Z == mindist ? 1 : 0);
+
+                if (
+                    cell.X < 0 || cell.X >= 128 ||
+                    cell.Y < 0 || cell.Y >= 128 ||
+                    cell.Z < 0 || cell.Z >= 128
+                    ) break;
+
+                // [Check the cell] //
+                hit = Game.tchunk.Data[cell.X, cell.Y, cell.Z] > 0;
+                if (hit) continue;
+
+                //Step forward allong ray] //
+                totdists += tonext * new Vector3(
+                    totdists.X == mindist ? 1f : 0f,
+                    totdists.Y == mindist ? 1f : 0f,
+                    totdists.Z == mindist ? 1f : 0f);
+            }
+            //===========================================================================//
+            // <----- Clean-up stuffs -----> //
+            point = ro + forward * dist;
+            hasselection = hit;
+            selectedcell = cell;
+            buildcell = prev;
+            //===========================================================================//
         }
     }
 }

@@ -12,17 +12,17 @@ namespace TNMC
     {
         public struct Chunk
         {
-            public uint[,,] Data = new uint[16,16,16];
+            public uint[,,] Data = new uint[128,128,128];
 
             public void Generate()
             {
-                for(int z = 0; z < 16; z++)
+                for(int z = 0; z < 128; z++)
                 {
-                    for(int y = 0; y < 16; y++)
+                    for(int y = 0; y < 128; y++)
                     {
-                        for(int x = 0; x < 16; x++)
+                        for(int x = 0; x < 128; x++)
                         {
-                            Data[x,y,z] = (uint)(Game.rand.NextDouble() <= 0.25 ? 1 : 0);
+                            Data[x,y,z] = (uint)(z == 0 ? 1 : 0);
                         }
                     }
                 }
