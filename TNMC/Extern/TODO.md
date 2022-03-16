@@ -1,5 +1,5 @@
 ﻿# Storthem
-	- VAperware Spiritual successor to Minecraft
+	- Vaperware Spiritual successor to Minecraft
 # TODO
 	- [ ] Design
 		- [ ] Visual
@@ -42,6 +42,9 @@
 		- [x] col = albedo * (sum of all light)
 
 # Problems for Future me:
+	- [ ] Fix for desctop PC
+	- [ ] Sliding index for chunk management
+	- [ ] Batch chunk updating for loading
 	- [x] Memory issue
 	- [ ] Placing blocks anywhere
 	- [ ] How bright should the sky be?
@@ -49,4 +52,4 @@
 	- [ ] Angular illumination.
 	- [x] being able to send enough data to the graphics card.
 	- [ ] Asynchronous chunk generation and data pushing
-	- [ ] Unsigned int with chunk data problem
+	- [x] Unsigned int with chunk data problem

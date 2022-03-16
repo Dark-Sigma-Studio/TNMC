@@ -32,21 +32,49 @@ namespace TNMC
 
         public class WorldServer
         {
-            /*  | Fetching data
-             *  +- Generation
-             *  +- 
-             * 
-             */
+            public uint[,,] Generate()
+            {
+                uint[,,] chunk = new uint[128,128,128];
+
+                for(int x = 0; x < 128; x++)
+                    for(int y = 0; y < 128; y++)
+                        for(int z = 0; z < 128; z++)
+                        {
+                            if (z * 5 <= x) chunk[x, y, z] = 1;
+                        }
+
+                return chunk;
+            }
+
+            public uint[,,] GetChunks()
+            {
+                return Generate();
+            }
         }
 
         public class WorldClient
         {
             public Player activePlayer;
 
+            public delegate uint[,,] ChunkFetchDelegate();
+            public ChunkFetchDelegate FetchChunks;
 
+            public void DoFetchChunk(Game.RenderChunk active)
+            {
+                uint[,,] chunk = FetchChunks();
+
+                for(int x = 0; x < 128; x++)
+                    for(int y =0; y < 128; y++)
+                        for(int z = 0; z < 128; z++)
+                        {
+                            active[x, y, z] = chunk[x, y, z];
+                        }
+            }
+            
         }
 
 
+        #region DEPRICATED
         public class MegaChunk
         {
             public uint[,,][,,] Data = new uint[2,2,2][,,];
@@ -120,5 +148,6 @@ namespace TNMC
                 GL.BufferSubData(BufferTarget.ShaderStorageBuffer, (IntPtr)0, (IntPtr)(Data.Length * sizeof(uint)), Data);
             }
         }
+        #endregion
     }
 }

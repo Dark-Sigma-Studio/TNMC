@@ -29,13 +29,6 @@ namespace TNMC
             public RenderChunk()
             {
                 uint[,,] Data = new uint[128, 128, 128];
-                for(int x = 0; x < 128; x++)
-                {
-                    for(int y = 0; y < 128; y++)
-                    {
-                        Data[x, y, 0] = 1;
-                    }
-                }
                 id = GL.GenBuffer();
                 GL.BindBuffer(BufferTarget.ShaderStorageBuffer, id);
                 GL.BufferData(
@@ -218,6 +211,12 @@ namespace TNMC
 
             curWorld = new World();
             curWorld.Client.activePlayer = player;
+
+            player.LoadChunks += curWorld.Client.DoFetchChunk;
+            curWorld.Client.FetchChunks += curWorld.Server.GetChunks;
+
+            player.LoadChunks(ActiveChunk);
+
             #endregion
 
             //tchunk.Bind();

@@ -91,6 +91,8 @@ namespace TNMC
             Game.Delegates.Movement += HandleMovement;
             Game.Delegates.Look += HandleLook;
             Game.Delegates.Look += ConDestruct;
+
+
         }
         #region Uniform stuffs
         int ucampos = -1;
@@ -117,6 +119,16 @@ namespace TNMC
             GL.Uniform3(uselectedcell, selectedcell.X, selectedcell.Y, selectedcell.Z);
         }
         #endregion
+
+        #region Chunk loading stuffs
+        public delegate void LoadChunksDelegate(Game.RenderChunk rc);
+        public LoadChunksDelegate LoadChunks;
+        public void DoLoadChunks()
+        {
+            LoadChunks(ActiveChunk);
+        }
+        #endregion
+
         delegate void CollisionDelegate();
         CollisionDelegate CollisionState;
         public void DoCollisions()
@@ -199,6 +211,7 @@ namespace TNMC
         {
             vel = impulse + moveimpulse;
             pos += vel * (float)dt;
+            moveimpulse *= (float)Math.Pow(0.1, dt);
         }
 
         delegate void MoveStateDelegate(KeyboardState kstate);
@@ -206,13 +219,16 @@ namespace TNMC
 
         public void FlyState(KeyboardState kstate)
         {
-            moveimpulse = Vector3.Zero;
             float speed = 5.0f;
 
-            if (kstate.IsKeyDown(Keys.W)) moveimpulse += forward * speed;
-            if (kstate.IsKeyDown(Keys.S)) moveimpulse -= forward * speed;
-            if (kstate.IsKeyDown(Keys.D)) moveimpulse += right * speed;
-            if (kstate.IsKeyDown(Keys.A)) moveimpulse -= right * speed;
+            Vector3 impvect = Vector3.Zero;
+
+            if (kstate.IsKeyDown(Keys.W)) impvect += forward * speed;
+            if (kstate.IsKeyDown(Keys.S)) impvect += -forward * speed;
+            if (kstate.IsKeyDown(Keys.D)) impvect += right * speed;
+            if (kstate.IsKeyDown(Keys.A)) impvect += -right * speed;
+
+            if (impvect.Length > 0) moveimpulse = impvect;
         }
 
         public void WalkState(KeyboardState kstate)
