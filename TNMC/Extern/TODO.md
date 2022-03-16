@@ -1,5 +1,5 @@
 ﻿# Storthem
-	- Totally not minecraft
+	- VAperware Spiritual successor to Minecraft
 # TODO
 	- [ ] Design
 		- [ ] Visual
