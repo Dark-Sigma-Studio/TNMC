@@ -10,6 +10,42 @@ namespace TNMC
 {
     public class World
     {
+        /* The world is split into two sections; Server and Client.
+         * 
+         * The server holds references to all active clients.
+         * The client holds a reference to the active player.
+         * The player holds a reference to the active chunks.
+         * 
+         * The world client fetches data from the world server
+         * The player requests updates from client
+         */
+
+        public WorldClient Client;
+        public WorldServer Server;
+
+
+        public World()
+        {
+            Server = new WorldServer();
+            Client = new WorldClient();
+        }
+
+        public class WorldServer
+        {
+            /*  | Fetching data
+             *  +- Generation
+             *  +- 
+             * 
+             */
+        }
+
+        public class WorldClient
+        {
+            public Player activePlayer;
+
+
+        }
+
 
         public class MegaChunk
         {

@@ -20,6 +20,54 @@ namespace TNMC
 {
     public class Game : GameWindow
     {
+        #region Render Chunk Stuffs
+        public RenderChunk ActiveChunk;
+        public class RenderChunk
+        {
+            private int id = -1;
+
+            public RenderChunk()
+            {
+                uint[,,] Data = new uint[128, 128, 128];
+                for(int x = 0; x < 128; x++)
+                {
+                    for(int y = 0; y < 128; y++)
+                    {
+                        Data[x, y, 0] = 1;
+                    }
+                }
+                id = GL.GenBuffer();
+                GL.BindBuffer(BufferTarget.ShaderStorageBuffer, id);
+                GL.BufferData(
+                    BufferTarget.ShaderStorageBuffer,
+                    Data.Length * sizeof(uint),
+                    Data,
+                    BufferUsageHint.DynamicDraw);
+                GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, 0, id);
+            }
+
+            public uint this[int x,int y,int z]
+            {
+                get
+                {
+                    uint[] val = { 0 };
+
+                    GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, 0, id);
+                    GL.GetBufferSubData(BufferTarget.ShaderStorageBuffer, (IntPtr)((z + 128 * y + 128 * 128 * x) * sizeof(uint)), sizeof(uint), val);
+
+                    return val[0];
+                }
+                set
+                {
+                    uint[] val = { value };
+
+                    GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, 0, id);
+                    GL.BufferSubData(BufferTarget.ShaderStorageBuffer, (IntPtr)((z + 128 * y + 128 * 128 * x) * sizeof(uint)), sizeof(uint), val);
+                }
+            }
+        }
+        #endregion
+
         #region Shader things
 
         public struct Shader
@@ -131,7 +179,7 @@ namespace TNMC
         #endregion
         #region Global stuffs
         public static Vector3 Gravity = new Vector3(0.0f, 0.0f, -10.0f);
-        public Player player = new Player();
+        public Player player;
         public static Random rand = new Random();
         #endregion
 
@@ -139,13 +187,15 @@ namespace TNMC
         {
         }
 
-        public static World.Chunk tchunk = new World.Chunk();
+        //public static World.Chunk tchunk = new World.Chunk();
+
+        World curWorld;
 
         protected override void OnLoad()
         {
             base.OnLoad();
 
-            tchunk.Generate();
+            //tchunk.Generate();
 
             GL.ClearColor(0.125f, 0.175f, 0.257f, 1.0f);
 
@@ -161,7 +211,16 @@ namespace TNMC
             sprog = ShaderProgram.Load("Resources/Screen.vert", "Resources/Screen.frag");
             GL.UseProgram(sprog.id);
 
-            tchunk.Bind();
+            #region Chunks and stuffs
+            ActiveChunk = new RenderChunk();
+            player = new Player();
+            player.ActiveChunk = ActiveChunk;
+
+            curWorld = new World();
+            curWorld.Client.activePlayer = player;
+            #endregion
+
+            //tchunk.Bind();
 
             uiResolution = GL.GetUniformLocation(sprog.id, "iResolution");
             if (Delegates.BindUniforms != null) Delegates.BindUniforms(sprog.id);

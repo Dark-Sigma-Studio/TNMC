@@ -25,6 +25,8 @@ namespace TNMC
         public double pitch = 0.0;
         public double yaw = 0.0;
 
+        public Game.RenderChunk ActiveChunk;
+
         public Matrix3 dirs
         {
             get
@@ -152,7 +154,7 @@ namespace TNMC
                         check.X = cell.X + x;
                         if (check.X < 0 || check.X >= 128) continue;
 
-                        if (Game.tchunk.Data[check.X, check.Y, check.Z] == 0) continue;
+                        if (ActiveChunk[check.X, check.Y, check.Z] == 0) continue;
 
                         Vector3 nearest = Vector3.Zero;
                         nearest.X = Math.Clamp(cpos.X, check.X, check.X + 1);
@@ -241,13 +243,11 @@ namespace TNMC
 
                 if(mstate.IsButtonDown(MouseButton.Left) && !mstate.WasButtonDown(MouseButton.Left))
                 {
-                    Game.tchunk.Data[selectedcell.X, selectedcell.Y, selectedcell.Z] = 0;
-                    Game.tchunk.Send();
+                    ActiveChunk[selectedcell.X, selectedcell.Y, selectedcell.Z] = 0;
                 }
                 if(mstate.IsButtonDown(MouseButton.Right) && !mstate.WasButtonDown(MouseButton.Right))
                 {
-                    Game.tchunk.Data[buildcell.X, buildcell.Y, buildcell.Z] = 1;
-                    Game.tchunk.Send();
+                    ActiveChunk[buildcell.X, buildcell.Y, buildcell.Z] = 1;
                 }
             }
         }
@@ -320,7 +320,7 @@ namespace TNMC
                     ) break;
 
                 // [Check the cell] //
-                hit = Game.tchunk.Data[cell.X, cell.Y, cell.Z] > 0;
+                hit = ActiveChunk[cell.X, cell.Y, cell.Z] > 0;
                 if (hit) continue;
 
                 //Step forward allong ray] //

@@ -42,7 +42,7 @@
 		- [x] col = albedo * (sum of all light)
 
 # Problems for Future me:
-	- [ ] Memory issue
+	- [x] Memory issue
 	- [ ] Placing blocks anywhere
 	- [ ] How bright should the sky be?
 	- [ ] Soft shadows (something like get distance to edge of voxel)
