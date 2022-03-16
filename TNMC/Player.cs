@@ -70,6 +70,8 @@ namespace TNMC
             }
         }
 
+        public Vector3i lastchunk = new Vector3i(0);
+
         public Vector3i curchunk
         {
             get
@@ -121,11 +123,11 @@ namespace TNMC
         #endregion
 
         #region Chunk loading stuffs
-        public delegate void LoadChunksDelegate(Game.RenderChunk rc);
+        public delegate void LoadChunksDelegate(Game.RenderChunk rc, Vector3i location);
         public LoadChunksDelegate LoadChunks;
-        public void DoLoadChunks()
+        public void DoLoadChunks(Vector3i location)
         {
-            LoadChunks(ActiveChunk);
+            LoadChunks(ActiveChunk, location);
         }
         #endregion
 
@@ -134,6 +136,11 @@ namespace TNMC
         public void DoCollisions()
         {
             CollisionState();
+            if(lastchunk != curchunk)
+            {
+                DoLoadChunks(curchunk);
+                lastchunk = curchunk;
+            }
         }
 
         public void NoCollision()
@@ -146,7 +153,7 @@ namespace TNMC
             if (float.IsNaN(pos.X) || float.IsNaN(pos.Y) || float.IsNaN(pos.Z)) return;
 
             double r = 0.5;
-            Vector3 cpos = pos + new Vector3(0.0f, 0.0f, eyelevel);
+            Vector3 cpos = pos + new Vector3(0.0f, 0.0f, eyelevel) + new Vector3(192);
 
             bool hit = false;
             Vector3 delta = Vector3.Zero;
@@ -156,15 +163,15 @@ namespace TNMC
             for(int z = -1; z <= 1; z++)
             {
                 check.Z = cell.Z + z;
-                if (check.Z < 0 || check.Z >= 128) continue;
+                if (check.Z < 0 || check.Z >= 384) continue;
                 for(int y = -1; y <= 1; y++)
                 {
                     check.Y = cell.Y + y;
-                    if (check.Y < 0 || check.Y >= 128) continue;
+                    if (check.Y < 0 || check.Y >= 384) continue;
                     for(int x = -1; x <= 1; x++)
                     {
                         check.X = cell.X + x;
-                        if (check.X < 0 || check.X >= 128) continue;
+                        if (check.X < 0 || check.X >= 384) continue;
 
                         if (ActiveChunk[check.X, check.Y, check.Z] == 0) continue;
 
@@ -177,7 +184,7 @@ namespace TNMC
                         if (tonearest.Length >= r || tonearest.Length == 0) continue;
 
                         Vector3 norm = tonearest.Normalized();
-                        Vector3 tpos = norm * (float)r + nearest;
+                        Vector3 tpos = norm * (float)r + nearest - new Vector3(192);
 
                         pos = tpos - new Vector3(0.0f, 0.0f, eyelevel);
                         vel = vel - ((vel * norm) * norm);
@@ -283,16 +290,16 @@ namespace TNMC
             cellstep.Z = Math.Sign(forward.Z);
             //===========================================================================//
             // <----- Set-up for first point of intersection -----> //
-            Vector3 ro = pos + new Vector3(0f, 0f, eyelevel);
+            Vector3 ro = pos + new Vector3(0f, 0f, eyelevel) + new Vector3(192);
 
             Vector3i cell = new Vector3i();
             cell.X = (int)Math.Floor(ro.X);
             cell.Y = (int)Math.Floor(ro.Y);
             cell.Z = (int)Math.Floor(ro.Z);
 
-            if (cell.X < 0 || cell.X >= 128 ||
-                cell.Y < 0 || cell.Y >= 128 ||
-                cell.Z < 0 || cell.Z >= 128) return;
+            if (cell.X < 0 || cell.X >= 384 ||
+                cell.Y < 0 || cell.Y >= 384 ||
+                cell.Z < 0 || cell.Z >= 384) return;
 
             Vector3i prev = cell;
 
@@ -330,9 +337,9 @@ namespace TNMC
                     totdists.Z == mindist ? 1 : 0);
 
                 if (
-                    cell.X < 0 || cell.X >= 128 ||
-                    cell.Y < 0 || cell.Y >= 128 ||
-                    cell.Z < 0 || cell.Z >= 128
+                    cell.X < 0 || cell.X >= 384 ||
+                    cell.Y < 0 || cell.Y >= 384 ||
+                    cell.Z < 0 || cell.Z >= 384
                     ) break;
 
                 // [Check the cell] //

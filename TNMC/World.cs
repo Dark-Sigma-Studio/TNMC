@@ -32,7 +32,7 @@ namespace TNMC
 
         public class WorldServer
         {
-            public uint[,,] Generate()
+            public uint[,,] Generate(Vector3i chunkid)
             {
                 uint[,,] chunk = new uint[128,128,128];
 
@@ -40,35 +40,43 @@ namespace TNMC
                     for(int y = 0; y < 128; y++)
                         for(int z = 0; z < 128; z++)
                         {
-                            if (z * 5 <= x) chunk[x, y, z] = 1;
+                            if (z + chunkid.Z * 128 - 64 < 0) chunk[x, y, z] = 1;
                         }
 
                 return chunk;
             }
 
-            public uint[,,] GetChunks()
+            public uint[,,] GetChunks(Vector3i chunkid)
             {
-                return Generate();
+                return Generate(chunkid);
             }
         }
 
         public class WorldClient
         {
-            public Player activePlayer;
+            public Player? activePlayer;
 
-            public delegate uint[,,] ChunkFetchDelegate();
+            public delegate uint[,,] ChunkFetchDelegate(Vector3i chunkid);
             public ChunkFetchDelegate FetchChunks;
 
-            public void DoFetchChunk(Game.RenderChunk active)
+            public void DoFetchChunk(Game.RenderChunk active, Vector3i location)
             {
-                uint[,,] chunk = FetchChunks();
-
-                for(int x = 0; x < 128; x++)
-                    for(int y =0; y < 128; y++)
-                        for(int z = 0; z < 128; z++)
+                for(int cx = -1; cx <= 1; cx++)
+                    for(int cy = -1; cy <= 1; cy++)
+                        for(int cz = -1; cz <= 1; cz++)
                         {
-                            active[x, y, z] = chunk[x, y, z];
+                            uint[,,] chunk = FetchChunks(new Vector3i(cx, cy, cz) + location);
+
+                            Vector3i offset = new Vector3i(cx + 1, cy + 1, cz + 1) * 128;
+
+                            for (int x = 0; x < 128; x++)
+                                for (int y = 0; y < 128; y++)
+                                    for (int z = 0; z < 128; z++)
+                                    {
+                                        active[x + offset.X, y + offset.Y, z + offset.Z] = chunk[x, y, z];
+                                    }
                         }
+                
             }
             
         }

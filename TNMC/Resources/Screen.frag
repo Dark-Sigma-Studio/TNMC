@@ -5,7 +5,7 @@
 
 layout(std430, binding = 0) buffer data000
 {
-	uint[128][128][128]chunk000;
+	uint[384][384][384]chunk000;
 };
 
 uniform ivec3 selectedcell;
@@ -31,9 +31,9 @@ bool Check(in ivec3 cell)
 {
 	bool solid = false;
 
-	if(cell.x  < 0 || cell.x >= 128 
-	|| cell.y  < 0 || cell.y >= 128 
-	|| cell.z  < 0 || cell.z >= 128) return false;
+	if(cell.x  < 0 || cell.x >= 384 
+	|| cell.y  < 0 || cell.y >= 384 
+	|| cell.z  < 0 || cell.z >= 384) return false;
 
 	solid = chunk000[cell.x][cell.y][cell.z] > 0;
 
@@ -197,7 +197,7 @@ void GetGlobalIllumination(inout HitStruct info, inout vec3 light)
 {
 	if(!info.hit) return;
 	
-	float levels = 1.0 / (1.0 + exp((8.0 - info.pos.z) / 2.0));
+	float levels = 1.0 / (1.0 + exp((80.0 - info.pos.z) / 20.0));
 	light += levels;
 }
 
@@ -232,8 +232,8 @@ void main()
 	HitStruct hitinfo = HitStruct
 	(
 		false,
-		cam.pos,
-		ivec3(floor(cam.pos))
+		cam.pos + 192,
+		ivec3(floor(cam.pos + 192))
 	);
 	float tdist = 0.0;
 	vec3 albedo = vec3(1.0);

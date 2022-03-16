@@ -28,7 +28,7 @@ namespace TNMC
 
             public RenderChunk()
             {
-                uint[,,] Data = new uint[128, 128, 128];
+                uint[,,] Data = new uint[384, 384, 384];
                 id = GL.GenBuffer();
                 GL.BindBuffer(BufferTarget.ShaderStorageBuffer, id);
                 GL.BufferData(
@@ -46,7 +46,7 @@ namespace TNMC
                     uint[] val = { 0 };
 
                     GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, 0, id);
-                    GL.GetBufferSubData(BufferTarget.ShaderStorageBuffer, (IntPtr)((z + 128 * y + 128 * 128 * x) * sizeof(uint)), sizeof(uint), val);
+                    GL.GetBufferSubData(BufferTarget.ShaderStorageBuffer, (IntPtr)((z + 384 * y + 384 * 384 * x) * sizeof(uint)), sizeof(uint), val);
 
                     return val[0];
                 }
@@ -55,7 +55,7 @@ namespace TNMC
                     uint[] val = { value };
 
                     GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, 0, id);
-                    GL.BufferSubData(BufferTarget.ShaderStorageBuffer, (IntPtr)((z + 128 * y + 128 * 128 * x) * sizeof(uint)), sizeof(uint), val);
+                    GL.BufferSubData(BufferTarget.ShaderStorageBuffer, (IntPtr)((z + 384 * y + 384 * 384 * x) * sizeof(uint)), sizeof(uint), val);
                 }
             }
         }
@@ -215,7 +215,7 @@ namespace TNMC
             player.LoadChunks += curWorld.Client.DoFetchChunk;
             curWorld.Client.FetchChunks += curWorld.Server.GetChunks;
 
-            player.LoadChunks(ActiveChunk);
+            player.LoadChunks(ActiveChunk, player.lastchunk);
 
             #endregion
 
