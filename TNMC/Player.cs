@@ -68,6 +68,14 @@ namespace TNMC
             }
         }
 
+        public Vector3i curchunk
+        {
+            get
+            {
+                return new Vector3i((int)Math.Floor(pos.X), (int)Math.Floor(pos.Y), (int)Math.Floor(pos.Z));
+            }
+        }
+
         public Player()
         {
             MoveState = FlyState;

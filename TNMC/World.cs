@@ -10,6 +10,43 @@ namespace TNMC
 {
     public class World
     {
+
+        public class MegaChunk
+        {
+            public uint[,,][,,] Data = new uint[2,2,2][,,];
+
+            public Chunk this[byte cx, byte cy, byte cz]
+            {
+                get
+                {
+                    Chunk chunk = new Chunk();
+                    chunk.Data = Data[cx, cy, cz];
+                    return chunk;
+                }
+                set
+                {
+                    Data[cx, cy, cz] = value.Data;
+                }
+            }
+            
+
+            public void Build()
+            {
+                Chunk chunk = new Chunk();
+                chunk.Generate();
+                for(byte x = 0; x < 3; x++)
+                {
+                    for(byte y = 0; y < 3; y++)
+                    {
+                        for(byte z = 0; z < 3; z++)
+                        {
+                            Data[x, y, z] = chunk.Data;
+                        }
+                    }
+                }
+            }
+        }
+
         public struct Chunk
         {
             public uint[,,] Data = new uint[128,128,128];
@@ -22,13 +59,13 @@ namespace TNMC
                     {
                         for(int x = 0; x < 128; x++)
                         {
-                            Data[x,y,z] = (uint)(z == 0 ? 1 : 0);
+                            Data[x,y,z] = (uint)(z <= 0 ? 1 : 0);
                         }
                     }
                 }
             }
 
-            public void Send()
+            public void Bind()
             {
                 int id = -1;
                 id = GL.GenBuffer();
@@ -38,8 +75,13 @@ namespace TNMC
                     Data.Length * sizeof(uint),
                     Data,
                     BufferUsageHint.DynamicDraw);
-                GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, 3, id);
-                GL.BindBuffer(BufferTarget.ShaderStorageBuffer, 0);
+                GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, 0, id);
+                //GL.BindBuffer(BufferTarget.ShaderStorageBuffer, 0);
+            }
+
+            public void Send()
+            {
+                GL.BufferSubData(BufferTarget.ShaderStorageBuffer, (IntPtr)0, (IntPtr)(Data.Length * sizeof(uint)), Data);
             }
         }
     }

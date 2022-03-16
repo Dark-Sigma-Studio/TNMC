@@ -161,7 +161,7 @@ namespace TNMC
             sprog = ShaderProgram.Load("Resources/Screen.vert", "Resources/Screen.frag");
             GL.UseProgram(sprog.id);
 
-            tchunk.Send();
+            tchunk.Bind();
 
             uiResolution = GL.GetUniformLocation(sprog.id, "iResolution");
             if (Delegates.BindUniforms != null) Delegates.BindUniforms(sprog.id);

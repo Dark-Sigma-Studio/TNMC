@@ -3,9 +3,37 @@
 #define iCoord gl_FragCoord.xy
 //-------------------------------------//
 
-layout(std430, binding = 3) buffer chunk
+layout(std430, binding = 0) buffer data000
 {
-	uint[128][128][128]data;
+	uint[128][128][128]chunk000;
+};
+layout(std430, binding = 1) buffer data001
+{
+	uint[128][128][128]chunk001;
+};
+layout(std430, binding = 2) buffer data010
+{
+	uint[128][128][128]chunk010;
+};
+layout(std430, binding = 3) buffer data011
+{
+	uint[128][128][128]chunk011;
+};
+layout(std430, binding = 4) buffer data100
+{
+	uint[128][128][128]chunk100;
+};
+layout(std430, binding = 5) buffer data101
+{
+	uint[128][128][128]chunk101;
+};
+layout(std430, binding = 6) buffer data110
+{
+	uint[128][128][128]chunk110;
+};
+layout(std430, binding = 7) buffer data111
+{
+	uint[128][128][128]chunk111;
 };
 
 uniform ivec3 selectedcell;
@@ -35,7 +63,7 @@ bool Check(in ivec3 cell)
 	|| cell.y  < 0 || cell.y >= 128 
 	|| cell.z  < 0 || cell.z >= 128) return false;
 
-	solid = data[cell.x][cell.y][cell.z] > 0;
+	solid = chunk000[cell.x][cell.y][cell.z] > 0;
 
 	return solid;
 }
